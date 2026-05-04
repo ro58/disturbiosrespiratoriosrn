@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Quiz Médico</title>
+
+<style>
+  body { font-family: Arial; padding: 20px; }
+  button {
+    display: block;
+    margin: 6px 0;
+    padding: 10px;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+  }
+  .correct { background-color: #4CAF50; color: white; }
+  .wrong { background-color: #f44336; color: white; }
+</style>
+</head>
+
+<body>
+
+<h3>Filtrar por classe:</h3>
+<select id="filtro" onchange="gerarPergunta()"></select>
+
+<h2 id="pergunta"></h2>
+
+<div id="opcoes"></div>
+
+<br>
+<button onclick="gerarPergunta()">Nova questão</button>
+
+<h3 id="placar"></h3>
+
+<script>
+
+// ================= CSV =================
+const csv = `;Taquipneia transitória do recém-nascido;Síndrome do desconforto respiratório;Síndrome de aspiração meconial;Pneumonia no RN;Hipertensão pulmonar persistente;Sequestro pulmonar;Malformação adenomatosa cística;Malformação arteriovenosa;Hérnia diafragmática congênita
+Fisiopatologia;Excesso de líquido alveolar;Deficiência de surfactante pulmonar, produzido por pneumócitos tipo 2;Secundário a aspiração de mecônio;Estreptococo do grupo B é o  principal agente;Resistência vascular sistêmica diminuída;Massa cística não funcionante;proliferação exacerbada de bronquíolos terminais ;;
+Fisiopatologia;;Ventilação heterogênea (alvéolos colabados e outros hiperinsuflados);Mecanismos obstrutivo, inalatório e inativador;;Resistência vascular pulmonar aumentada;;massa multicística ;;
+Fisiopatologia;;;Mecônio começa a ser produzido a partir das 16 semanas de gestação e chega ao cólon somenta na 34.ª semana;;Redução dos capilares pulmonares, alterações no desenvolvimento dos capilares pulmonares ou má-adaptação;;processo inicia-se com 6-8 semanas e vai até 14-16 semanas de idade gestacional;;
+Fisiopatologia;;;;;Patência do canal arteirial e do forame oval;;;;
+Quadro clínico;Taquipneia + desconforto respiratório;Desconforto respiratório;;;Cianose;infecções respiratórias de repetição;Desconforto ou insuficiência respiratória no RN;Policitemia secundária;
+Quadro clínico;;;;;;Metade é assintomático;;Metade é assintomático;
+Quadro clínico;;;;;;;Infecções de repetição nas crianças maiores;Metade apresenta sintomatologia: hemoptise, dispneia e fadiga;
+Epidemiologia;;Pré-termo;;Principal causa de sepse neonatal;;;Malformação congênita pulmonar mais comum;;
+Epidemiologia;;;;;;;;;
+Fator de risco;Parto cesáreo eletivo sem trabalho de parto;Prematuridade (em especial, abaixo das 28 semanas);Maturação fisiológica (pós-datismo) ;Bolsa rota prolongada;;;;;
+Fator de risco;DM materno;DM materno;Resposta a eventos hipóxicos agudos ;Ausência de profilaxia para estrepto do grupo B;;;;;
+Fator de risco;Asma materna ;Sexo masculino;Resposta a eventos hipóxicos crônicos ;Outros fatores de risco para sepse neonatal;;;;;
+Fator de risco;Parto antes de 39 semanas ;gestação múltipla;;;;;;;
+Fator de risco;Sexo masculino. ;Ausência de trabalho de parto;;;;;;;
+Fator de risco;;Asfixia perinatal;;;;;;;
+Duração;3-5 dias;Piora progressiva nas primeiras 72h de vida;;;;;;;
+Radiografia;Hiperinsuflação pulmonar. ;Infiltrado de padrão reticulogranular difuso: o padrão “vidro moído”;Infiltrado grosseiro difuso ;infiltrados pulmonares assimétricos ;Costuma ser normal;massa adjacente ao lobo inferior (arredondada ou triangular);Massa pulmonar cística, radiotransparente com desvio de mediastino;Opacidade no local da MAV;
+Radiografia;Aumento da trama vascular com congestão peri-hilar. ;Broncogramas aéreos devidos a alvéolos hiperestendidos com aprisionamento de ar ;Áreas de atelectasia ;Hiperinsuflação pulmonar ;;;;;
+Radiografia;"Espessamento de cissuras (a famosa ""cisurite"") ";Aumento de líquido pulmonar ;Hiperinsuflação pulmonar ;Áreas de condensação pulmonar ;;;;;
+Radiografia;Discreta cardiomegalia, derrame pleural e inversão da cúpula diafragmática podem estar presentes nos casos mais graves ;Redução no volume pulmonar. ;Retificação diafragmática ;Broncograma aéreo ;;;;;
+Radiografia;;Opacificação pulmonar global com apagamento da silhueta cardíaca nos casos mais graves. ;Cardiomegalia ;derrame pleural: associado a pneumonia estafilocócica;;;;;
+Radiografia;;RX pode levar 6-12h para apresentar alterações características;Pneumotórax/ pneumomediastino (casos graves);Pneumatoceles (S. aureus ou Klebsiella) ;;;;;
+Radiografia;;;;Sinais de comprometimento de lobo superior como condensação: associado a pneumonia por broncosapiração ;;;;;
+Radiografia;;;;Opacificações;;;;;
+Radiografia;;;;Infiltrado de padrão reticulogranular difuso: o padrão “vidro moído”;;;;;
+TC;;;;;;;Queijo suíço;;
+Tratamento;Suporte;Suporte;Suporte;Suporte;Suporte;Tratamento cirúrgico por maior risco de malignização;Cirurgia;Embolização;Intubação
+Tratamento;SatO2 > 90%;Surfactante (especialmente nas primeiras 2h de vida);Drogas vasoativas;< 72h: ampicilina + aminoglicosídeo;SatO2 > 90%;Cirurgia;;Cirurgia;Cirurgia
+Tratamento;CPAP pode ser necessário;;Óxido nítrico;;Sedação e analgesia;;;;
+Tratamento;;;;;Óxido nítrico;;;;
+Segunda linha de tratamento;;;;;Milrinone endovenoso/sildenafil enteral;;;;
+Prevenção;;Corticoite antenatal;;;;;;;
+Complicações;;Displasia broncopulmonar;Hipertensão pulmonar;;;;;;
+Exames complementares;;;ecocardiografia;Hemoculturas;ecocardiografia;;Tomografia computadorizada;;
+Exames complementares;;;;Hemograma;;;;;
+Exames complementares;;;;PCR;;;;;
+Exames complementares;;;;;;;;;`;
+
+// =======================================
+
+// Parse
+const data = csv.trim().split('\n').map(l => l.split(';'));
+const doencas = data[0].slice(1);
+const linhas = data.slice(1);
+
+// ===== desempenho =====
+let stats = JSON.parse(localStorage.getItem("quizStats")) || { acertos: 0, erros: 0 };
+
+function salvarStats() {
+  localStorage.setItem("quizStats", JSON.stringify(stats));
+}
+
+function atualizarPlacar() {
+  document.getElementById("placar").innerText =
+    `Acertos: ${stats.acertos} | Erros: ${stats.erros}`;
+}
+
+// ===== filtro =====
+const filtro = document.getElementById("filtro");
+
+// extrair classes únicas
+const classes = [...new Set(linhas.map(l => l[0]).filter(c => c))];
+
+filtro.innerHTML = `<option value="todas">Todas</option>` +
+  classes.map(c => `<option value="${c}">${c}</option>`).join("");
+
+let respostasCorretas = [];
+let currentQuestion = null;
+
+// ===== FUNÇÃO PRINCIPAL: Encontrar todas as doenças que têm determinado valor =====
+function encontrarDoencasPorValor(valorBusca, classeFiltro) {
+  const doencasEncontradas = [];
+  
+  linhas.forEach((linha, linhaIndex) => {
+    // Se tem filtro de classe e a linha não é da classe selecionada, ignora
+    if (classeFiltro !== "todas" && linha[0] !== classeFiltro) {
+      return;
+    }
+    
+    // Procura o valor em todas as colunas da linha
+    for (let i = 1; i < linha.length; i++) {
+      const celula = linha[i];
+      if (celula && celula.trim() === valorBusca) {
+        doencasEncontradas.push(i - 1); // índice da doença
+      }
+    }
+  });
+  
+  // Remove duplicatas (caso o mesmo valor apareça múltiplas vezes na mesma doença)
+  return [...new Set(doencasEncontradas)];
+}
+
+// ===== sorteio =====
+function sortearCelulaValida() {
+  let tentativas = 0;
+  const classeFiltro = filtro.value;
+
+  while (tentativas < 1000) {
+    const linhaIndex = Math.floor(Math.random() * linhas.length);
+    const linha = linhas[linhaIndex];
+
+    if (classeFiltro !== "todas" && linha[0] !== classeFiltro) {
+      tentativas++;
+      continue;
+    }
+
+    // Escolhe uma coluna aleatória que tenha valor não vazio
+    const colunasComValor = [];
+    for (let i = 1; i < linha.length; i++) {
+      if (linha[i] && linha[i].trim() !== "") {
+        colunasComValor.push(i - 1);
+      }
+    }
+    
+    if (colunasComValor.length === 0) {
+      tentativas++;
+      continue;
+    }
+    
+    const colIndex = colunasComValor[Math.floor(Math.random() * colunasComValor.length)];
+    const valor = linha[colIndex + 1];
+    
+    if (valor && valor.trim() !== "") {
+      const valorLimpo = valor.trim();
+      
+      // Busca em TODAS as linhas (não apenas na atual) por este valor
+      const doencasCorretas = encontrarDoencasPorValor(valorLimpo, classeFiltro);
+      
+      if (doencasCorretas.length > 0) {
+        return {
+          classe: linha[0],
+          caracteristica: valorLimpo,
+          colunasCorretas: doencasCorretas,
+          linha: linhaIndex
+        };
+      }
+    }
+
+    tentativas++;
+  }
+
+  // Fallback: se não encontrar após 1000 tentativas
+  return null;
+}
+
+// ===== gerar pergunta =====
+function gerarPergunta() {
+  const opcoesDiv = document.getElementById("opcoes");
+  opcoesDiv.innerHTML = "";
+
+  currentQuestion = sortearCelulaValida();
+
+  if (!currentQuestion) {
+    document.getElementById("pergunta").innerText = "Sem dados válidos para o filtro selecionado.";
+    return;
+  }
+
+  respostasCorretas = currentQuestion.colunasCorretas;
+
+  document.getElementById("pergunta").innerHTML =
+    `Associar <b>${currentQuestion.caracteristica}</b> (${currentQuestion.classe}) a uma das doenças abaixo:`;
+
+  doencas.forEach((d, i) => {
+    const btn = document.createElement("button");
+    btn.innerText = d;
+    btn.onclick = () => verificarResposta(btn, i);
+    opcoesDiv.appendChild(btn);
+  });
+}
+
+// ===== resposta =====
+function verificarResposta(btn, index) {
+  const botoes = document.querySelectorAll("#opcoes button");
+
+  // Se já respondeu, não faz nada
+  if (botoes[0].disabled) return;
+
+  // Desabilita todos os botões
+  botoes.forEach(b => b.disabled = true);
+
+  // Verifica se a resposta clicada está correta
+  if (respostasCorretas.includes(index)) {
+    btn.classList.add("correct");
+    stats.acertos++;
+  } else {
+    btn.classList.add("wrong");
+    stats.erros++;
+  }
+
+  // Marca TODAS as respostas corretas (independente do que foi clicado)
+  respostasCorretas.forEach(i => {
+    botoes[i].classList.add("correct");
+  });
+
+  salvarStats();
+  atualizarPlacar();
+}
+
+// init
+atualizarPlacar();
+gerarPergunta();
+
+</script>
+
+</body>
+</html>
